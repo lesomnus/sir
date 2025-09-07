@@ -3,6 +3,7 @@ package sir_test
 import (
 	"io"
 	"testing"
+	"time"
 
 	"github.com/lesomnus/sir"
 	"github.com/stretchr/testify/require"
@@ -64,5 +65,66 @@ func TestByCount(t *testing.T) {
 
 		err := w.Write([]int{})
 		require.ErrorIs(t, err, io.ErrNoProgress)
+	})
+}
+
+func TestByTimeout(t *testing.T) {
+	// TODO: can I use synctest?
+
+	const GP = 100 * time.Millisecond
+	const ET = 10 * time.Millisecond
+
+	around := func(t *testing.T, expected time.Duration, actual time.Duration) {
+		t.Helper()
+		require.GreaterOrEqual(t, expected, actual-ET/2)
+		require.LessOrEqual(t, expected, actual+ET)
+	}
+
+	t.Run("flush at the given interval", func(t *testing.T) {
+		x := require.New(t)
+
+		s, w := sir.Mem(sir.Auto[int])
+		w = sir.ByTimeout(w, GP)
+		defer w.Close()
+
+		t0 := time.Now()
+		r := s.Reader(0)
+
+		w.Write(0)
+		v, err := r.Next()
+		dt := time.Since(t0)
+		around(t, dt, GP)
+		x.NoError(err)
+		x.Equal([]int{0}, v)
+
+		w.Write(1)
+		v, err = r.Next()
+		dt = time.Since(t0)
+		around(t, dt, 2*GP)
+		x.NoError(err)
+		x.Equal([]int{1}, v)
+
+	})
+	t.Run("manual flush reset the timer", func(t *testing.T) {
+		x := require.New(t)
+
+		s, w := sir.Mem(sir.Auto[int])
+		w = sir.ByTimeout(w, GP)
+		defer w.Close()
+
+		t0 := time.Now()
+		r := s.Reader(0)
+
+		w.Write(0)
+		time.Sleep(GP / 2)
+		w.Flush()
+		r.Next()
+
+		w.Write(1)
+		v, err := r.Next()
+		dt := time.Since(t0)
+		around(t, dt, GP/2+GP)
+		x.NoError(err)
+		x.Equal([]int{1}, v)
 	})
 }

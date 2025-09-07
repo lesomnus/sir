@@ -162,7 +162,7 @@ func TestMem(t *testing.T) {
 		x.NoError(err)
 		x.Equal([]int{4, 5, 6}, vs)
 
-		vs, err = r.Next()
+		_, err = r.Next()
 		x.ErrorIs(err, io.EOF)
 	})
 	t.Run("flush does nothing if there is no data in the block", func(t *testing.T) {
