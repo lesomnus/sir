@@ -1,6 +1,7 @@
 package sir
 
 import (
+	"io"
 	"sync"
 
 	"golang.org/x/exp/constraints"
@@ -36,21 +37,21 @@ func Mem[K constraints.Ordered, T any](indexer Indexer[K, T]) (Stream[K, T], Wri
 	return s, s
 }
 
-func (s *mem[K, T]) Write(v T) bool {
+func (s *mem[K, T]) Write(v T) error {
 	s.m.Lock()
 	defer s.m.Unlock()
 	if s.closed {
-		return false
+		return io.ErrClosedPipe
 	}
 
 	l := s.x(v)
 	if s.l != nil && l < *s.l {
-		return false
+		return io.ErrNoProgress
 	}
 	s.l = &l
 
 	s.tail.data = append(s.tail.data, v)
-	return true
+	return nil
 }
 
 func (s *mem[K, T]) Close() {
@@ -113,12 +114,12 @@ func (s *mem[K, T]) Reader(index K) Reader[T] {
 	return &memReader[K, T]{s, curr}
 }
 
-func (r *memReader[K, T]) Next() ([]T, bool) {
+func (r *memReader[K, T]) Next() ([]T, error) {
 	r.s.m.Lock()
 	defer r.s.m.Unlock()
 	if r.b.next == nil {
 		if r.s.closed {
-			return nil, false
+			return nil, io.EOF
 		}
 		r.s.c.Wait()
 	}
@@ -127,10 +128,10 @@ func (r *memReader[K, T]) Next() ([]T, bool) {
 			panic("no data")
 		}
 
-		return nil, false
+		return nil, io.EOF
 	}
 
 	vs := r.b.data
 	r.b = r.b.next
-	return vs, true
+	return vs, nil
 }

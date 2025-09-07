@@ -7,11 +7,11 @@ type Stream[K constraints.Ordered, T any] interface {
 }
 
 type Writer[T any] interface {
-	Write(v T) bool
+	Write(v T) error
 	Flush()
 	Close()
 }
 
 type Reader[T any] interface {
-	Next() ([]T, bool)
+	Next() ([]T, error)
 }

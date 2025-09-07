@@ -1,6 +1,7 @@
 package sir_test
 
 import (
+	"io"
 	"testing"
 
 	"github.com/lesomnus/sir"
@@ -22,16 +23,16 @@ func TestByCount(t *testing.T) {
 
 		r := s.Reader(0)
 
-		vs, ok := r.Next()
-		x.True(ok)
+		vs, err := r.Next()
+		x.NoError(err)
 		x.Equal([][]int{{1, 2, 3}}, vs)
 
-		vs, ok = r.Next()
-		x.True(ok)
+		vs, err = r.Next()
+		x.NoError(err)
 		x.Equal([][]int{{4, 5, 6, 7}}, vs)
 
-		vs, ok = r.Next()
-		x.True(ok)
+		vs, err = r.Next()
+		x.NoError(err)
 		x.Equal([][]int{{8, 9}, {10, 11}}, vs)
 	})
 	t.Run("manual flush reset the count", func(t *testing.T) {
@@ -48,12 +49,20 @@ func TestByCount(t *testing.T) {
 
 		r := s.Reader(0)
 
-		vs, ok := r.Next()
-		x.True(ok)
+		vs, err := r.Next()
+		x.NoError(err)
 		x.Equal([][]int{{1, 2}}, vs)
 
-		vs, ok = r.Next()
-		x.True(ok)
+		vs, err = r.Next()
+		x.NoError(err)
 		x.Equal([][]int{{3, 4}, {5, 6}}, vs)
+	})
+	t.Run("write empty slice does nothing", func(t *testing.T) {
+		_, w := sir.Mem(sir.AutoFirst[int])
+		w = sir.ByCount(w, 3)
+		defer w.Close()
+
+		err := w.Write([]int{})
+		require.ErrorIs(t, err, io.ErrNoProgress)
 	})
 }

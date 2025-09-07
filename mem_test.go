@@ -1,6 +1,7 @@
 package sir_test
 
 import (
+	"io"
 	"testing"
 	"time"
 
@@ -20,8 +21,8 @@ func TestMem(t *testing.T) {
 		w.Write(3)
 		w.Flush()
 
-		vs, ok := s.Reader(0).Next()
-		require.True(t, ok)
+		vs, err := s.Reader(0).Next()
+		require.NoError(t, err)
 		require.Equal(t, []int{1, 2, 3}, vs)
 	})
 	t.Run("write fails if index is not increased", func(t *testing.T) {
@@ -30,14 +31,14 @@ func TestMem(t *testing.T) {
 
 		w.Write(2)
 
-		ok := w.Write(1)
-		require.False(t, ok)
+		err := w.Write(1)
+		require.ErrorIs(t, err, io.ErrNoProgress)
 
 		w.Write(3)
 		w.Flush()
 
-		vs, ok := s.Reader(0).Next()
-		require.True(t, ok)
+		vs, err := s.Reader(0).Next()
+		require.NoError(t, err)
 		require.Equal(t, []int{2, 3}, vs)
 	})
 	t.Run("write multiple blocks", func(t *testing.T) {
@@ -55,12 +56,12 @@ func TestMem(t *testing.T) {
 		w.Flush()
 
 		r := s.Reader(0)
-		vs, ok := r.Next()
-		require.True(t, ok)
+		vs, err := r.Next()
+		require.NoError(t, err)
 		require.Equal(t, []int{1, 2, 3}, vs)
 
-		vs, ok = r.Next()
-		require.True(t, ok)
+		vs, err = r.Next()
+		require.NoError(t, err)
 		require.Equal(t, []int{4, 5, 6}, vs)
 	})
 	t.Run("read from the middle", func(t *testing.T) {
@@ -83,15 +84,17 @@ func TestMem(t *testing.T) {
 		w.Flush()
 
 		r := s.Reader(4)
-		vs, ok := r.Next()
-		require.True(t, ok)
+		vs, err := r.Next()
+		require.NoError(t, err)
 		require.Equal(t, []int{4, 5, 6}, vs)
 
-		vs, ok = r.Next()
-		require.True(t, ok)
+		vs, err = r.Next()
+		require.NoError(t, err)
 		require.Equal(t, []int{7, 8, 9}, vs)
 	})
 	t.Run("each reader maintains their own cursor on the stream", func(t *testing.T) {
+		x := require.New(t)
+
 		s, w := sir.Mem(sir.Auto[int])
 		defer w.Close()
 
@@ -111,28 +114,30 @@ func TestMem(t *testing.T) {
 		w.Flush()
 
 		r1 := s.Reader(4)
-		vs, ok := r1.Next()
-		require.True(t, ok)
-		require.Equal(t, []int{4, 5, 6}, vs)
+		vs, err := r1.Next()
+		x.NoError(err)
+		x.Equal([]int{4, 5, 6}, vs)
 
 		r2 := s.Reader(0)
-		vs, ok = r2.Next()
-		require.True(t, ok)
-		require.Equal(t, []int{1, 2, 3}, vs)
+		vs, err = r2.Next()
+		x.NoError(err)
+		x.Equal([]int{1, 2, 3}, vs)
 
-		vs, ok = r1.Next()
-		require.True(t, ok)
-		require.Equal(t, []int{7, 8, 9}, vs)
+		vs, err = r1.Next()
+		x.NoError(err)
+		x.Equal([]int{7, 8, 9}, vs)
 
-		vs, ok = r2.Next()
-		require.True(t, ok)
-		require.Equal(t, []int{4, 5, 6}, vs)
+		vs, err = r2.Next()
+		x.NoError(err)
+		x.Equal([]int{4, 5, 6}, vs)
 
-		vs, ok = r2.Next()
-		require.True(t, ok)
-		require.Equal(t, []int{7, 8, 9}, vs)
+		vs, err = r2.Next()
+		x.NoError(err)
+		x.Equal([]int{7, 8, 9}, vs)
 	})
 	t.Run("reader can read even if the stream is closed", func(t *testing.T) {
+		x := require.New(t)
+
 		s, w := sir.Mem(sir.Auto[int])
 		defer w.Close()
 
@@ -149,13 +154,16 @@ func TestMem(t *testing.T) {
 		w.Close()
 
 		r := s.Reader(0)
-		vs, ok := r.Next()
-		require.True(t, ok)
-		require.Equal(t, []int{1, 2, 3}, vs)
+		vs, err := r.Next()
+		x.NoError(err)
+		x.Equal([]int{1, 2, 3}, vs)
 
-		vs, ok = r.Next()
-		require.True(t, ok)
-		require.Equal(t, []int{4, 5, 6}, vs)
+		vs, err = r.Next()
+		x.NoError(err)
+		x.Equal([]int{4, 5, 6}, vs)
+
+		vs, err = r.Next()
+		x.ErrorIs(err, io.EOF)
 	})
 	t.Run("flush does nothing if there is no data in the block", func(t *testing.T) {
 		s, w := sir.Mem(sir.Auto[int])
@@ -170,8 +178,8 @@ func TestMem(t *testing.T) {
 		}()
 
 		w.Flush()
-		_, ok := r.Next()
-		require.False(t, ok)
+		_, err := r.Next()
+		require.ErrorIs(t, err, io.EOF)
 
 		dt := time.Since(t0)
 		require.GreaterOrEqual(t, dt, GP)
@@ -187,38 +195,20 @@ func TestMem(t *testing.T) {
 		w.Write(3)
 		w.Close()
 
-		vs, ok := r.Next()
-		require.True(t, ok)
+		vs, err := r.Next()
+		require.NoError(t, err)
 		require.Equal(t, []int{1, 2, 3}, vs)
 	})
 	t.Run("write on closed stream returns false", func(t *testing.T) {
 		_, w := sir.Mem(sir.Auto[int])
 		defer w.Close()
 
-		ok := w.Write(1)
-		require.True(t, ok)
+		err := w.Write(1)
+		require.NoError(t, err)
 
 		w.Close()
-		ok = w.Write(1)
-		require.False(t, ok)
-	})
-	t.Run("read on closed stream returns false", func(t *testing.T) {
-		s, w := sir.Mem(sir.Auto[int])
-		defer w.Close()
-
-		r := s.Reader(0)
-
-		w.Write(1)
-		w.Write(2)
-		w.Write(3)
-		w.Flush()
-		w.Close()
-
-		_, ok := r.Next()
-		require.True(t, ok)
-
-		_, ok = r.Next()
-		require.False(t, ok)
+		err = w.Write(1)
+		require.ErrorIs(t, err, io.ErrClosedPipe)
 	})
 	t.Run("close of the writer unblocks the blocked reader", func(t *testing.T) {
 		s, w := sir.Mem(sir.Auto[int])
@@ -232,8 +222,8 @@ func TestMem(t *testing.T) {
 			w.Close()
 		}()
 
-		_, ok := r.Next()
-		require.False(t, ok)
+		_, err := r.Next()
+		require.ErrorIs(t, err, io.EOF)
 
 		dt := time.Since(t0)
 		require.GreaterOrEqual(t, dt, GP)

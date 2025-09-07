@@ -1,5 +1,7 @@
 package sir
 
+import "io"
+
 type byCount[T any] struct {
 	Writer[[]T]
 	c int
@@ -10,20 +12,20 @@ func ByCount[T any](w Writer[[]T], cap int) Writer[[]T] {
 	return &byCount[T]{w, cap, 0}
 }
 
-func (w *byCount[T]) Write(vs []T) bool {
+func (w *byCount[T]) Write(vs []T) error {
 	n := len(vs)
 	if n == 0 {
-		return false
+		return io.ErrNoProgress
 	}
-	if !w.Writer.Write(vs) {
-		return false
+	if err := w.Writer.Write(vs); err != nil {
+		return err
 	}
 
 	w.s += n
 	if w.s >= w.c {
 		w.Flush()
 	}
-	return true
+	return nil
 }
 
 func (w *byCount[T]) Flush() {
