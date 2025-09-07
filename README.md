@@ -26,7 +26,7 @@ There are four sections: Header, Blocks, Index Table, and Footer.
 00 |           Magic           | VER  | COMP |     RSV     |
 08 |                  Index Table Offset                   |
 10 |                  First Block Offset                   |
-18 |           Metadata (variadic, up to 32KB)             |
+18 |                       Metadata                        |
 ```
 
 - **Magic**: A fixed constant to identify the file format. The first 4 bytes must be `0x53 0x49 0x52 0x00` (`SIR\0`).
@@ -34,7 +34,7 @@ There are four sections: Header, Blocks, Index Table, and Footer.
 - **COMP**: Compression algorithm used for the payload. See [Compression Algorithms](#compression-algorithms).
 - **Index Table Offset**: Start position of the Index Table in the file. If 0, refer to the Footer section to find the Index Table offset.
 - **First Block Offset**: Start position of the first Block in the file. If 0, refer to the Footer section.
-- **Metadata**: Up to 32KB, can be used as needed.
+- **Metadata**: Can be used as needed.
 
 ### Blocks
 
