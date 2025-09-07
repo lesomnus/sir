@@ -28,7 +28,11 @@ func (w *byCount[T]) Write(vs []T) error {
 	return nil
 }
 
-func (w *byCount[T]) Flush() {
-	w.Writer.Flush()
+func (w *byCount[T]) Flush() error {
+	if err := w.Writer.Flush(); err != nil {
+		return err
+	}
+
 	w.s = 0
+	return nil
 }

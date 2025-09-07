@@ -8,8 +8,8 @@ type Stream[K constraints.Ordered, T any] interface {
 
 type Writer[T any] interface {
 	Write(v T) error
-	Flush()
-	Close()
+	Flush() error
+	Close() error
 }
 
 type Reader[T any] interface {

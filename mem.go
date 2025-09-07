@@ -54,12 +54,13 @@ func (s *mem[K, T]) Write(v T) error {
 	return nil
 }
 
-func (s *mem[K, T]) Close() {
+func (s *mem[K, T]) Close() error {
 	s.m.Lock()
 	defer s.m.Unlock()
 	s.closed = true
 	s.flush()
 	s.c.Broadcast()
+	return nil
 }
 
 func (s *mem[K, T]) flush() bool {
@@ -74,16 +75,17 @@ func (s *mem[K, T]) flush() bool {
 	return true
 }
 
-func (s *mem[K, T]) Flush() {
+func (s *mem[K, T]) Flush() error {
 	s.m.Lock()
 	defer s.m.Unlock()
 	if s.closed {
-		return
+		return io.ErrClosedPipe
 	}
 
 	if s.flush() {
 		s.c.Broadcast()
 	}
+	return nil
 }
 
 type memReader[K constraints.Ordered, T any] struct {
