@@ -10,15 +10,23 @@ func ByCount[T any](w Writer[[]T], cap int) Writer[[]T] {
 	return &byCount[T]{w, cap, 0}
 }
 
-func (w *byCount[T]) Write(v []T) bool {
-	if !w.Writer.Write(v) {
+func (w *byCount[T]) Write(vs []T) bool {
+	n := len(vs)
+	if n == 0 {
+		return false
+	}
+	if !w.Writer.Write(vs) {
 		return false
 	}
 
-	w.s += len(v)
+	w.s += n
 	if w.s >= w.c {
 		w.Flush()
-		w.s = 0
 	}
 	return true
+}
+
+func (w *byCount[T]) Flush() {
+	w.Writer.Flush()
+	w.s = 0
 }
