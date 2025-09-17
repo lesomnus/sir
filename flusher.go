@@ -7,21 +7,25 @@ import (
 )
 
 type byCount[T any] struct {
-	Writer[[]T]
+	Writer[T]
 	c int
 	s int
+	m func(v T) int
 }
 
-func ByCount[T any](w Writer[[]T], cap int) Writer[[]T] {
-	return &byCount[T]{w, cap, 0}
+func ByCount[T any](w Writer[T], cap int, meter func(v T) int) Writer[T] {
+	if meter == nil {
+		meter = func(v T) int { return 1 }
+	}
+	return &byCount[T]{w, cap, 0, meter}
 }
 
-func (w *byCount[T]) Write(vs []T) error {
-	n := len(vs)
+func (w *byCount[T]) Write(v T) error {
+	n := w.m(v)
 	if n == 0 {
 		return io.ErrNoProgress
 	}
-	if err := w.Writer.Write(vs); err != nil {
+	if err := w.Writer.Write(v); err != nil {
 		return err
 	}
 

@@ -14,7 +14,7 @@ func TestByCount(t *testing.T) {
 		x := require.New(t)
 
 		s, w := sir.Mem(sir.AutoFirst[int])
-		w = sir.ByCount(w, 3)
+		w = sir.ByCount(w, 3, func(vs []int) int { return len(vs) })
 		defer w.Close()
 
 		w.Write([]int{1, 2, 3})
@@ -40,7 +40,7 @@ func TestByCount(t *testing.T) {
 		x := require.New(t)
 
 		s, w := sir.Mem(sir.AutoFirst[int])
-		w = sir.ByCount(w, 3)
+		w = sir.ByCount(w, 3, func(vs []int) int { return len(vs) })
 		defer w.Close()
 
 		w.Write([]int{1, 2})
@@ -60,7 +60,7 @@ func TestByCount(t *testing.T) {
 	})
 	t.Run("write empty slice does nothing", func(t *testing.T) {
 		_, w := sir.Mem(sir.AutoFirst[int])
-		w = sir.ByCount(w, 3)
+		w = sir.ByCount(w, 3, func(vs []int) int { return len(vs) })
 		defer w.Close()
 
 		err := w.Write([]int{})
