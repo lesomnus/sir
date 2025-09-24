@@ -65,7 +65,7 @@ func TestMem(t *testing.T) {
 		require.Equal(t, []int{4, 5, 6}, vs)
 	})
 	t.Run("read from the middle", func(t *testing.T) {
-		s, w := sir.Mem(sir.Auto[int])
+		s, w := sir.Mem(func(v int) int { return v * 2 })
 		defer w.Close()
 
 		w.Write(1)
@@ -83,7 +83,7 @@ func TestMem(t *testing.T) {
 		w.Write(9)
 		w.Flush()
 
-		r := s.Reader(4)
+		r := s.Reader(8)
 		vs, err := r.Next()
 		require.NoError(t, err)
 		require.Equal(t, []int{4, 5, 6}, vs)

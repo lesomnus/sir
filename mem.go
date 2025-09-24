@@ -7,26 +7,27 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-type block[T any] struct {
-	data []T
-	next *block[T]
+type memBlock[K constraints.Ordered, T any] struct {
+	index K
+	data  []T
+	next  *memBlock[K, T]
 }
 
 type mem[K constraints.Ordered, T any] struct {
 	x Indexer[K, T]
-	l *K
+	k K
 
 	m sync.Mutex
 	c *sync.Cond
 
-	head *block[T]
-	tail *block[T]
+	head *memBlock[K, T]
+	tail *memBlock[K, T]
 
 	closed bool
 }
 
 func Mem[K constraints.Ordered, T any](indexer Indexer[K, T]) (Stream[K, T], Writer[T]) {
-	b := &block[T]{}
+	b := &memBlock[K, T]{}
 	s := &mem[K, T]{
 		x:    indexer,
 		head: b,
@@ -44,12 +45,16 @@ func (s *mem[K, T]) Write(v T) error {
 		return io.ErrClosedPipe
 	}
 
-	l := s.x(v)
-	if s.l != nil && l < *s.l {
+	k := s.x(v)
+	if k < s.k {
 		return io.ErrNoProgress
 	}
-	s.l = &l
+	s.k = k
 
+	var z K
+	if s.tail.index == z {
+		s.tail.index = k
+	}
 	s.tail.data = append(s.tail.data, v)
 	return nil
 }
@@ -69,7 +74,7 @@ func (s *mem[K, T]) flush() bool {
 		return false
 	}
 
-	b := &block[T]{}
+	b := &memBlock[K, T]{}
 	s.tail.next = b
 	s.tail = b
 	return true
@@ -90,7 +95,7 @@ func (s *mem[K, T]) Flush() error {
 
 type memReader[K constraints.Ordered, T any] struct {
 	s *mem[K, T]
-	b *block[T]
+	b *memBlock[K, T]
 }
 
 func (s *mem[K, T]) Reader(index K) Reader[T] {
@@ -103,9 +108,7 @@ func (s *mem[K, T]) Reader(index K) Reader[T] {
 		if len(next.data) == 0 {
 			break
 		}
-
-		i := s.x(next.data[0])
-		if index < i {
+		if index < next.index {
 			break
 		}
 
