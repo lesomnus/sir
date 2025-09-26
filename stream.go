@@ -14,4 +14,17 @@ type Writer[T any] interface {
 
 type Reader[T any] interface {
 	Next() ([]T, error)
+	Close() error
+}
+
+type errReader[T any] struct {
+	err error
+}
+
+func (r errReader[T]) Next() ([]T, error) {
+	return nil, r.err
+}
+
+func (r errReader[T]) Close() error {
+	return nil
 }

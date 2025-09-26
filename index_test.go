@@ -58,7 +58,7 @@ func TestIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal([]indexSlot{
 			{1000, 10},
 		}, g)
@@ -79,7 +79,7 @@ func TestIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal([]indexSlot{
 			{1000, 10},
 		}, g)
@@ -102,7 +102,7 @@ func TestIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal([]indexSlot{
 			{1000, 10},
 			{3000, 12},
@@ -127,7 +127,7 @@ func TestIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal([]indexSlot{
 			{1000, 10},
 			{3000, 12},
@@ -159,7 +159,7 @@ func TestIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal(answer, g)
 
 		_, _, ok = next()
@@ -188,12 +188,12 @@ func TestIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal(answer[:IndexGroupSize], g)
 
 		i, g, ok = next()
 		x.True(ok)
-		x.Equal(uint64(1), i)
+		x.Equal(1, i)
 		x.Equal(answer[IndexGroupSize:], g)
 	})
 }
@@ -352,7 +352,7 @@ func TestEncodeIndexTable(t *testing.T) {
 		x.NoError(err)
 
 		data := b.Bytes()
-		x.Equal(IndexGroupByteSize+((16)+(8*9)), len(data))
+		x.Equal(IndexGroupByteSize*2, len(data))
 		x.Equal(uint64(1000), binary.LittleEndian.Uint64(data[0:8]))
 		x.Equal(uint64(10), binary.LittleEndian.Uint64(data[8:16]))
 		for i := range IndexGroupSize - 1 {
@@ -459,7 +459,7 @@ func TestDecodeIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal([]indexSlot{
 			{1000, 10},
 		}, g)
@@ -488,7 +488,7 @@ func TestDecodeIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal([]indexSlot{
 			{1000, 10},
 		}, g)
@@ -519,7 +519,7 @@ func TestDecodeIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal([]indexSlot{
 			{1000, 10},
 			{3000, 12},
@@ -552,7 +552,7 @@ func TestDecodeIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal([]indexSlot{
 			{1000, 10},
 			{3000, 12},
@@ -592,7 +592,7 @@ func TestDecodeIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal(answer, g)
 
 		_, _, ok = next()
@@ -629,12 +629,12 @@ func TestDecodeIndexTable(t *testing.T) {
 
 		i, g, ok := next()
 		x.True(ok)
-		x.Equal(uint64(0), i)
+		x.Equal(0, i)
 		x.Equal(answer[:IndexGroupSize], g)
 
 		i, g, ok = next()
 		x.True(ok)
-		x.Equal(uint64(1), i)
+		x.Equal(1, i)
 		x.Equal(answer[IndexGroupSize:], g)
 	})
 }

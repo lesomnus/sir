@@ -140,3 +140,7 @@ func (r *memReader[K, T]) Next() ([]T, error) {
 	r.b = r.b.next
 	return vs, nil
 }
+
+func (r *memReader[K, T]) Close() error {
+	return nil
+}

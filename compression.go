@@ -1,8 +1,10 @@
 package sir
 
-import "io"
+import (
+	"io"
+)
 
-type Compression int
+type Compression byte
 
 const (
 	Plain     Compression = iota
@@ -20,15 +22,18 @@ type Compressor interface {
 }
 
 type NopCompressor struct {
+	w io.Writer
 }
 
-func (NopCompressor) Write(p []byte) (int, error) {
-	return len(p), nil
+func (c *NopCompressor) Write(p []byte) (int, error) {
+	return c.w.Write(p)
 }
-func (NopCompressor) Close() error {
+func (*NopCompressor) Close() error {
 	return nil
 }
-func (NopCompressor) Flush() error {
+func (*NopCompressor) Flush() error {
 	return nil
 }
-func (NopCompressor) Reset(w io.Writer) {}
+func (c *NopCompressor) Reset(w io.Writer) {
+	c.w = w
+}
