@@ -15,6 +15,25 @@ const (
 	Zstandard Compression = 0x05
 )
 
+func (c Compression) String() string {
+	switch c {
+	case Plain:
+		return "plain"
+	case Deflate:
+		return "deflate"
+	case Brotili:
+		return "brotili"
+	case LZ4:
+		return "lz4"
+	case Snappy:
+		return "snappy"
+	case Zstandard:
+		return "zstandard"
+	default:
+		return "unknown"
+	}
+}
+
 type Compressor interface {
 	io.WriteCloser
 	Flush() error
