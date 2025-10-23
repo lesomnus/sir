@@ -6,6 +6,23 @@ import (
 	"time"
 )
 
+type immediate[T any] struct {
+	Writer[T]
+}
+
+func Immediate[T any](w Writer[T]) Writer[T] {
+	return immediate[T]{w}
+}
+
+func (w immediate[T]) Write(v T) error {
+	if err := w.Writer.Write(v); err != nil {
+		return err
+	}
+
+	w.Writer.Flush()
+	return nil
+}
+
 type byCount[T any] struct {
 	Writer[T]
 	c int
